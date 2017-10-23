@@ -3,8 +3,7 @@ test your agent's strength against a set of known agents using tournament.py
 and include the results in your report.
 """
 import random
-import math 
-
+import math
 
 class SearchTimeout(Exception):
     """Subclass base exception for code clarity. """
@@ -41,18 +40,13 @@ def custom_score(game, player):
 
     if game.is_winner(player):
         return float("inf")
-
-    if game.move_count:
-        # First move
-        cx = math.ceil(game.width / 2.)
-        cy = math.ceil(game.height / 2.)
-        y, x = game.get_player_location(player)
-        if x == cx and y == cy:
-            return float('inf')
-
+    
+    space     = len(game.get_blank_spaces())
     own_moves = len(game.get_legal_moves(player))
     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-    return float(own_moves - opp_moves)
+    weight    = 1 -  (space / (game.width * game.height))
+    #print("Score : {}, space : {}, My Moves : {}, Opp moves: {}".format((own_moves - weight * opp_moves), space, own_moves, opp_moves))
+    return float(own_moves - weight * opp_moves)
 
 def custom_score_2(game, player):
     """Calculate the heuristic value of a game state from the point of view
@@ -82,7 +76,11 @@ def custom_score_2(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    return float(len(game.get_legal_moves(player)))
+    space     = len(game.get_blank_spaces())
+    own_moves = len(game.get_legal_moves(player))
+    opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
+    #weight    = (space / (game.width * game.height))
+    return float((own_moves - opp_moves)/space)
 
 
 def custom_score_3(game, player):
@@ -200,12 +198,32 @@ class MinimaxPlayer(IsolationPlayer):
         return best_move
 
     def max_value(self, game, depth):
+        """This function represent maximum node. The function get the list
+        all possible moves for the player based on the current game state,
+        and return the maximum score
+
+        Parameters
+        ----------
+        game : `isolation.Board`
+            An instance of `isolation.Board` encoding the current state of the
+            game (e.g., player locations and blocked cells).
+
+        depth : int
+            The current depth
+        Returns
+        ----------
+        float
+            The maximum score
+        """
         # 1. Check for timeout
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
     
         # 2. Check for reached a leaf.
         if depth == 0:
+            # print("Score : {} / {} / {}".format(self.score(game, self), 
+            #                               game.get_player_location(self),
+            #                               game.get_player_location(game.get_opponent(self))))
             return self.score(game, self)
 
         # Get legel moves
@@ -217,12 +235,33 @@ class MinimaxPlayer(IsolationPlayer):
             
         value = float('-inf')
 
+       # print("--------------------------- {} ------------------".format(depth))
         for move in moves:
             value = max(value, self.min_value(game.forecast_move(move), depth-1))
+        # print("Max : {} / {} / {}".format(value, 
+        #                                   game.get_player_location(self),
+        #                                   game.get_player_location(game.get_opponent(self))))
         return value
             
 
     def min_value(self, game, depth):
+        """This function represent minimum node. The function get the list
+        all possible moves for the player based on the current game state,
+        and return the minimum score
+
+        Parameters
+        ----------
+        game : `isolation.Board`
+            An instance of `isolation.Board` encoding the current state of the
+            game (e.g., player locations and blocked cells).
+
+        depth : int
+            The current depth
+        Returns
+        ----------
+        float
+            The minimum score
+        """
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
             
@@ -239,8 +278,12 @@ class MinimaxPlayer(IsolationPlayer):
             
         value = float('inf')
 
+        #print("--------------------------- {} ------------------".format(depth))
         for move in moves:
             value = min(value, self.max_value(game.forecast_move(move), depth-1))
+        # print("Min : {} / {} / {}".format(value, 
+        #                                   game.get_player_location(self),
+        #                                   game.get_player_location(game.get_opponent(self))))
         return value
 
     def minimax(self, game, depth):
@@ -333,45 +376,66 @@ class AlphaBetaPlayer(IsolationPlayer):
         # TODO: finish this function!
         best_move = (-1,-1)
 
-        if game.get_legal_moves():
-            best_move = game.get_legal_moves()[0]
+        if len(game.get_legal_moves()) == 0:
+            # Np ore valid moves
+            return best_move
 
         try:
             depth = 1
-            best_score = float('-inf')
             while True:
-                # The try/except block will automatically catch the exception
-                # raised when the timer is about to expire.
-                move, current_score =  self.alphabeta(game, depth)
+                # Get next best move, for the current
+                # game state
+                move =  self.alphabeta(game, depth)
 
-                if current_score > best_score:
+                if move is  not None:
+                    # only assign best move when there is
+                    # valid value
                     best_move = move
-                    best_score= current_score
-
-                if current_score == float('inf') or current_score == float('-inf'):
+                else:
                     break
+                # Increase depth
                 depth    += 1
         except SearchTimeout:
             pass  # Handle any actions required after timeout as needed
 
         # Return the best move from the last completed search iteration
-        #print(best_move)
         return best_move
 
     def min_value(self, game, depth, alpha, beta):
+        """"This function represent minimum node. The function get the list
+        all possible moves for the player based on the current game state,
+        and return the minimum score, and update beta value.
+
+        Parameters
+        ----------
+        game : `isolation.Board`
+            An instance of `isolation.Board` encoding the current state of the
+            game (e.g., player locations and blocked cells).
+
+        depth : int
+            The current depth
+        alpha : float
+            Lowest best balue.
+        beta: float
+            Highest best value
+        Returns
+        ----------
+        float
+            The minimum score
+        """
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
 
         # We reach a leaf
         if depth == 0:
-            return self.score(game, self), game.get_player_location(self)
+            return self.score(game, self)
 
         # Get legel moves
         moves = game.get_legal_moves()
 
         if len(moves) == 0:
             # No more legal moves
-            return self.score(game, self), (-1, -1)
+            return self.score(game, self)
 
         best_score = float("inf")
         for move in moves:
@@ -380,13 +444,40 @@ class AlphaBetaPlayer(IsolationPlayer):
 
             # Get min score
             best_score = min(best_score, new_score)
-            if best_score <= alpha:
-                return best_score, move
 
+            # Check the score lower then the lowest
+            # best score
+            if best_score <= alpha:
+                return best_score
+
+            # Compute new highest best score            
             beta = min(beta, best_score)
-        return best_score, move
+        return best_score
 
     def max_value(self, game, depth, alpha, beta):
+        """"This function represent maximum node. The function get the list
+        all possible moves for the player based on the current game state,
+        and return the minimum score, and update alpha value.
+
+        Parameters
+        ----------
+        game : `isolation.Board`
+            An instance of `isolation.Board` encoding the current state of the
+            game (e.g., player locations and blocked cells).
+
+        depth : int
+            The current depth
+        alpha : float
+            Lowest best balue.
+        beta: float
+            Highest best value
+        Returns
+        ----------
+        float
+            The minimum score
+        tuple (int, int)
+            the best move based on the current board status.
+        """
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
 
@@ -405,16 +496,12 @@ class AlphaBetaPlayer(IsolationPlayer):
         best_move  = None
         for move in moves:
             # Apply the 'move' and get the score for the next level
-            new_score, _  = self.min_value(game.forecast_move(move), depth-1, alpha, beta)
-            #print("Best : {}, new : {}".format(best_score, new_score), end="")
-            
+            new_score = self.min_value(game.forecast_move(move), depth-1, alpha, beta)
             # Compute the new best score and Move
             if best_score < new_score:
                 best_move  = move
                 best_score = new_score
            
-           # print(" ... new best score : {}".format(best_score))
-
             # See if new best score is higher then
             # the highest best score
             if best_score >= beta:
@@ -472,9 +559,8 @@ class AlphaBetaPlayer(IsolationPlayer):
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
 
-        # TODO: finish this function!
-
         # Search the new best move
-        best_score, best_move = self.max_value(game, depth,alpha, beta)
-        #print("Last best move: {}/ best score: {}".format(str(best_move), best_score))
-        return best_move,best_score
+        _, best_move = self.max_value(game, depth,alpha, beta)
+
+        # Return best move
+        return best_move
