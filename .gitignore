@@ -98,3 +98,5 @@ ENV/
 isolation-143421.zip
 *.json
 log.txt
+.log.txt.swp
+*.zip

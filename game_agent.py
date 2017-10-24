@@ -36,18 +36,15 @@ def custom_score(game, player):
     """
     # TODO: finish this function!
     if game.is_loser(player):
-        #print("Loser")
         return float("-inf")
 
     if game.is_winner(player):
-        #print("winner")
-        return float("inf")
+         return float("inf")
     
     space     = len(game.get_blank_spaces())
     own_moves = len(game.get_legal_moves(player))
     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
     weight    = 1 -  (space / (game.width * game.height))
-    #print("Score : {}, space : {}, My Moves : {}, Opp moves: {}".format((own_moves - weight * opp_moves), space, own_moves, opp_moves))
     return float(own_moves - weight * opp_moves)
 
 def custom_score_2(game, player):
@@ -78,11 +75,10 @@ def custom_score_2(game, player):
     if game.is_winner(player):
         return float("inf")
 
-    space     = len(game.get_blank_spaces())
     own_moves = len(game.get_legal_moves(player))
     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-    #weight    = (space / (game.width * game.height))
-    return float((own_moves - opp_moves)/space)
+  
+    return float(own_moves - 2 * opp_moves)
 
 
 def custom_score_3(game, player):
@@ -141,7 +137,7 @@ class IsolationPlayer:
         positive value large enough to allow the function to return before the
         timer expires.
     """
-    def __init__(self, search_depth=3, score_fn=custom_score, timeout=10.):
+    def __init__(self, search_depth=3, score_fn=custom_score, timeout=20.):
         self.search_depth = search_depth
         self.score = score_fn
         self.time_left = None
@@ -223,10 +219,7 @@ class MinimaxPlayer(IsolationPlayer):
     
         # 2. Check for reached a leaf.
         if depth == 0:
-            # print("Score : {} / {} / {}".format(self.score(game, self), 
-            #                               game.get_player_location(self),
-            #                               game.get_player_location(game.get_opponent(self))))
-            return self.score(game, self)
+             return self.score(game, self)
 
         # Get legel moves
         moves = game.get_legal_moves()
@@ -237,12 +230,8 @@ class MinimaxPlayer(IsolationPlayer):
             
         value = float('-inf')
 
-       # print("--------------------------- {} ------------------".format(depth))
         for move in moves:
             value = max(value, self.min_value(game.forecast_move(move), depth-1))
-        # print("Max : {} / {} / {}".format(value, 
-        #                                   game.get_player_location(self),
-        #                                   game.get_player_location(game.get_opponent(self))))
         return value
             
 
@@ -265,7 +254,6 @@ class MinimaxPlayer(IsolationPlayer):
             The minimum score
         """
         if self.time_left() < self.TIMER_THRESHOLD:
-            print("Timeout")
             raise SearchTimeout()
             
         # 2. Check for reached a leaf.
@@ -281,12 +269,8 @@ class MinimaxPlayer(IsolationPlayer):
             
         value = float('inf')
 
-        #print("--------------------------- {} ------------------".format(depth))
         for move in moves:
             value = min(value, self.max_value(game.forecast_move(move), depth-1))
-        # print("Min : {} / {} / {}".format(value, 
-        #                                   game.get_player_location(self),
-        #                                   game.get_player_location(game.get_opponent(self))))
         return value
 
     def minimax(self, game, depth):
@@ -391,13 +375,6 @@ class AlphaBetaPlayer(IsolationPlayer):
                 # game state
                 best_move =  self.alphabeta(game, depth)
 
-                # if move is  not None:
-                #     # only assign best move when there is
-                #     # valid value
-                #     best_move = move
-                # else:
-                #     break
-                # Increase depth
                 depth    += 1
         except SearchTimeout:
             pass  # Handle any actions required after timeout as needed
@@ -567,22 +544,18 @@ class AlphaBetaPlayer(IsolationPlayer):
         best_score = float('-inf')
 
         for move in moves:
-                # Apply the 'move' and get the score for the next level
+            # Apply the 'move' and get the score for the next level
             new_score = self.min_value(game.forecast_move(move), depth-1, alpha, beta)
-            #print("New score : ",new_score, " best score: ", best_score)
             # Compute the new best score and Move
             if best_score < new_score:
                 best_move  = move
                 best_score = new_score
-                ##print("Changes best score to ", best_score, " Alpha :", alpha, ", Beta : ", beta)
-           
+               
             # See if new best score is higher then
             # the highest best score
             if best_score >= beta:
-                #print("Stop best score is ", best_score, " Alpha :", alpha, ", Beta : ", beta)
                 return  best_move
             # Compute the new lowset best score
             alpha = max(alpha, best_score)
-
         # Return the bew action and best score
         return best_move

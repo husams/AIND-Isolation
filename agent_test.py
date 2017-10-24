@@ -20,7 +20,7 @@ class IsolationTest(unittest.TestCase):
         #self.player1 = game_agent.MinimaxPlayer(search_depth=4, score_fn=game_agent.custom_score)
         #self.player2 = game_agent.MinimaxPlayer(search_depth=4, score_fn=improved_score)
 
-        self.player1 = game_agent.AlphaBetaPlayer()
+        self.player1 = game_agent.AlphaBetaPlayer(score_fn=game_agent.custom_score_3)
         self.player2 = game_agent.AlphaBetaPlayer(score_fn=improved_score)
         self.game = isolation.Board(self.player1, self.player2, 9, 9)
 
