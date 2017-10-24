@@ -36,9 +36,11 @@ def custom_score(game, player):
     """
     # TODO: finish this function!
     if game.is_loser(player):
+        #print("Loser")
         return float("-inf")
 
     if game.is_winner(player):
+        #print("winner")
         return float("inf")
     
     space     = len(game.get_blank_spaces())
@@ -114,7 +116,7 @@ def custom_score_3(game, player):
 
     own_moves = len(game.get_legal_moves(player))
     opp_moves = len(game.get_legal_moves(game.get_opponent(player)))
-    return float(own_moves - opp_moves)
+    return float(own_moves / (opp_moves + 0.0001))
 
 
 class IsolationPlayer:
@@ -263,6 +265,7 @@ class MinimaxPlayer(IsolationPlayer):
             The minimum score
         """
         if self.time_left() < self.TIMER_THRESHOLD:
+            print("Timeout")
             raise SearchTimeout()
             
         # 2. Check for reached a leaf.
@@ -326,6 +329,7 @@ class MinimaxPlayer(IsolationPlayer):
                 testing.
         """
         if self.time_left() < self.TIMER_THRESHOLD:
+            print("Timeout")
             raise SearchTimeout()
 
         # TODO: finish this function!
@@ -385,14 +389,14 @@ class AlphaBetaPlayer(IsolationPlayer):
             while True:
                 # Get next best move, for the current
                 # game state
-                move =  self.alphabeta(game, depth)
+                best_move =  self.alphabeta(game, depth)
 
-                if move is  not None:
-                    # only assign best move when there is
-                    # valid value
-                    best_move = move
-                else:
-                    break
+                # if move is  not None:
+                #     # only assign best move when there is
+                #     # valid value
+                #     best_move = move
+                # else:
+                #     break
                 # Increase depth
                 depth    += 1
         except SearchTimeout:
@@ -440,10 +444,7 @@ class AlphaBetaPlayer(IsolationPlayer):
         best_score = float("inf")
         for move in moves:
             # Apply the 'move' and get the score for the next level
-            new_score, _ = self.max_value(game.forecast_move(move), depth-1, alpha, beta)
-
-            # Get min score
-            best_score = min(best_score, new_score)
+            new_score = min(best_score, self.max_value(game.forecast_move(move), depth-1, alpha, beta))
 
             # Check the score lower then the lowest
             # best score
@@ -483,33 +484,28 @@ class AlphaBetaPlayer(IsolationPlayer):
 
         # We reach leave
         if depth == 0:
-            return self.score(game, self), game.get_player_location(self)
+            return self.score(game, self)
 
         # Get legel moves
         moves = game.get_legal_moves()
 
         if len(moves) == 0:
             # No more legal moves
-            return self.score(game, self), (-1, -1)
+            return self.score(game, self)
 
         best_score = float("-inf")
-        best_move  = None
         for move in moves:
             # Apply the 'move' and get the score for the next level
-            new_score = self.min_value(game.forecast_move(move), depth-1, alpha, beta)
-            # Compute the new best score and Move
-            if best_score < new_score:
-                best_move  = move
-                best_score = new_score
-           
+            best_score = max(best_score, self.min_value(game.forecast_move(move), depth-1, alpha, beta))
+       
             # See if new best score is higher then
             # the highest best score
             if best_score >= beta:
-                return best_score, best_move
+                return best_score
             # Compute the new lowset best score
             alpha = max(alpha, best_score)
-        # Return the bew action and best score
-        return best_score, best_move
+        # Return  best score
+        return best_score
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf")):
         """Implement depth-limited minimax search with alpha-beta pruning as
@@ -559,8 +555,34 @@ class AlphaBetaPlayer(IsolationPlayer):
         if self.time_left() < self.TIMER_THRESHOLD:
             raise SearchTimeout()
 
-        # Search the new best move
-        _, best_move = self.max_value(game, depth,alpha, beta)
 
-        # Return best move
+        # Get legel moves
+        moves = game.get_legal_moves()
+
+        if len(moves) == 0:
+            # No more legal moves
+            return (-1, -1)
+
+        best_move  = moves[0]
+        best_score = float('-inf')
+
+        for move in moves:
+                # Apply the 'move' and get the score for the next level
+            new_score = self.min_value(game.forecast_move(move), depth-1, alpha, beta)
+            #print("New score : ",new_score, " best score: ", best_score)
+            # Compute the new best score and Move
+            if best_score < new_score:
+                best_move  = move
+                best_score = new_score
+                ##print("Changes best score to ", best_score, " Alpha :", alpha, ", Beta : ", beta)
+           
+            # See if new best score is higher then
+            # the highest best score
+            if best_score >= beta:
+                #print("Stop best score is ", best_score, " Alpha :", alpha, ", Beta : ", beta)
+                return  best_move
+            # Compute the new lowset best score
+            alpha = max(alpha, best_score)
+
+        # Return the bew action and best score
         return best_move
