@@ -444,7 +444,7 @@ class AlphaBetaPlayer(IsolationPlayer):
         best_score = float("inf")
         for move in moves:
             # Apply the 'move' and get the score for the next level
-            new_score = min(best_score, self.max_value(game.forecast_move(move), depth-1, alpha, beta))
+            best_score = min(best_score, self.max_value(game.forecast_move(move), depth-1, alpha, beta))
 
             # Check the score lower then the lowest
             # best score
